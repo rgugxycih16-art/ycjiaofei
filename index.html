@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程缴费协作攻略 - 上海陪诊小河</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        body { 
+            background-color: #F0FDF4; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 自定义动画 */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        /* 隐藏滚动条 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // --- 自定义 Icon 组件 ---
+        const Icon = ({ name, className }) => {
+            const icons = {
+                'alert-triangle': <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></>,
+                'AlertTriangle': <><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></>,
+                
+                'check': <polyline points="20 6 9 17 4 12" />,
+                'Check': <polyline points="20 6 9 17 4 12" />,
+                
+                'alert-circle': <><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></>,
+                
+                'scan-line': <><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 12h10"/></>,
+                
+                'smartphone': <><rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" /></>,
+                'Smartphone': <><rect width="14" height="20" x="5" y="2" rx="2" ry="2" /><path d="M12 18h.01" /></>,
+                
+                'monitor-smartphone': <><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" /><path d="M10 19v-3.96 3.15" /><path d="M7 21h5" /><rect width="10" height="14" x="16" y="12" rx="2" /></>,
+                
+                'mouse-pointer-click': <><path d="m9 9 5 12 1.8-5.2L21 14Z" /><path d="M7.2 2.2 8 5.1" /><path d="m5.1 8-2.9-.8" /><path d="M14 4.1 12 6" /><path d="m6 12-1.9 2" /></>,
+                
+                'layers': <><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></>,
+                
+                'credit-card': <><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></>,
+                
+                'users': <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></>,
+                
+                'refresh-cw': <><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></>,
+                'RefreshCw': <><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></>,
+                
+                'camera': <><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></>,
+                'Camera': <><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></>,
+            };
+
+            const content = icons[name];
+            if (!content) return null;
+
+            return (
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={className}
+                >
+                    {content}
+                </svg>
+            );
+        };
+
+        // --- 组件: 黄金法则 (紧凑无箭头版) ---
+        function GoldenRuleSection() {
+            return (
+                // 容器：等比例缩小 (p-3, mb-4, rounded-xl)
+                <div className="bg-gradient-to-r from-orange-50 to-red-50 p-3 rounded-xl border border-orange-100 shadow-sm mb-4 animate-fade-in">
+                    
+                    {/* 标题栏：等比例缩小 */}
+                    <div className="flex items-start gap-2 mb-2">
+                        <div className="bg-orange-100 p-1.5 rounded-full text-orange-600 shrink-0 shadow-sm border border-orange-200">
+                            <Icon name="AlertTriangle" className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <h2 className="text-sm font-bold text-orange-900 leading-tight">核心必读：60秒黄金法则</h2>
+                            <p className="text-orange-800 text-[10px] mt-0.5 opacity-90 leading-tight">手机截图或拍照，请务必遵守此规则，否则二维码将立即失效。</p>
+                        </div>
+                    </div>
+                    
+                    {/* 步骤内容区域：等比例缩小，去除箭头 */}
+                    <div className="bg-white/60 rounded-lg p-2 border border-orange-100/50">
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-1.5 md:gap-2 text-xs">
+                            
+                            {/* Step 1 */}
+                            <div className="flex items-center gap-1.5 font-bold text-stone-700 w-full md:w-auto p-1.5 rounded bg-white shadow-sm border border-stone-100">
+                                <span className="bg-stone-200 text-stone-600 w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0">1</span>
+                                <span className="whitespace-nowrap">发之前点击刷新</span>
+                                <Icon name="RefreshCw" className="w-3 h-3 text-emerald-500 ml-auto md:ml-1" />
+                            </div>
+                            
+                            {/* Step 2 (无箭头) */}
+                            <div className="flex items-center gap-1.5 font-bold text-stone-700 w-full md:w-auto p-1.5 rounded bg-white shadow-sm border border-stone-100">
+                                <span className="bg-stone-200 text-stone-600 w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0">2</span>
+                                <span className="whitespace-nowrap">立即截图/拍照</span>
+                                <Icon name="Camera" className="w-3 h-3 text-blue-500 ml-auto md:ml-1" />
+                            </div>
+                            
+                            {/* Step 3 (无箭头) */}
+                            <div className="flex items-center gap-1.5 font-bold text-red-600 w-full md:w-auto p-1.5 rounded bg-red-50 shadow-sm border border-red-100 ring-1 ring-red-100">
+                                <span className="bg-red-200 text-red-700 w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0">3</span>
+                                <span className="whitespace-nowrap">发送后 <span className="underline decoration-1 underline-offset-2">千万别刷新</span></span>
+                                <Icon name="AlertTriangle" className="w-3 h-3 ml-auto md:ml-1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- 组件: 步骤卡片 ---
+        const MethodCard = ({ id, number, title, badge, content, warning, isActive, onToggle }) => {
+            
+            // 默认样式：统一使用清爽的绿色
+            let containerClass = "bg-white border-emerald-200 shadow-emerald-50 ring-1 ring-emerald-100";
+            let numberClass = "bg-emerald-500 text-white border-white";
+            let borderLeftClass = "border-emerald-500";
+            let titleClass = "text-emerald-900";
+            let textClass = "text-stone-600";
+            let badgeClass = "bg-orange-100 text-orange-700 border-orange-200";
+
+            if (isActive) {
+                // 选中状态：背景与序号球都使用橙红渐变
+                containerClass = "bg-gradient-to-br from-orange-50 to-red-50 border-orange-300 ring-2 ring-orange-200 shadow-lg transform scale-[1.02]";
+                numberClass = "bg-gradient-to-br from-orange-500 to-red-500 text-white border-white ring-2 ring-orange-200 shadow-sm";
+                borderLeftClass = "border-orange-400"; 
+                titleClass = "text-red-900";
+                textClass = "text-orange-900/90";
+                badgeClass = "bg-gradient-to-r from-orange-100 to-red-100 text-red-700 border-orange-200";
+            }
+
+            return (
+                <div 
+                    onClick={() => onToggle(id)}
+                    className={`relative pl-4 border-l-2 pb-6 last:pb-0 animate-slide-up cursor-pointer group transition-all duration-300 ${borderLeftClass}`}
+                >
+                    {/* 序号 */}
+                    <div className={`absolute -left-[9px] top-0 w-5 h-5 rounded-full border-2 shadow-sm flex items-center justify-center text-[10px] font-bold transition-all duration-300 z-10 ${numberClass}`}>
+                        {isActive ? <Icon name="check" className="w-3 h-3" /> : number}
+                    </div>
+
+                    <div className={`p-4 rounded-xl shadow-sm border transition-all duration-300 ${containerClass}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                            <h4 className={`font-bold transition-colors ${titleClass}`}>
+                                {title}
+                            </h4>
+                            {badge && (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold border ${badgeClass}`}>
+                                    {badge}
+                                </span>
+                            )}
+                        </div>
+                        
+                        <div className={`text-sm leading-relaxed space-y-2 transition-colors ${textClass}`}>
+                            {content}
+                        </div>
+
+                        {warning && (
+                            <div className="mt-3 text-xs bg-white/60 text-red-700 p-2 rounded border border-red-100 flex items-start gap-1.5">
+                                <Icon name="alert-circle" className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                <div>
+                                    <span className="font-bold">温馨提示：</span>
+                                    {warning}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 主应用 ---
+        function App() {
+            const [os, setOs] = useState('iphone'); // 'iphone' | 'android'
+            const [activeStepId, setActiveStepId] = useState(null); // 记录当前选中的步骤ID
+
+            // 切换选中状态
+            const handleStepToggle = (id) => {
+                setActiveStepId(prev => prev === id ? null : id);
+            };
+
+            // 切换OS时重置选中状态
+            const handleOsChange = (newOs) => {
+                setOs(newOs);
+                setActiveStepId(null);
+            };
+
+            return (
+                <div className="max-w-md mx-auto min-h-screen pb-10 transition-colors duration-500">
+                    
+                    {/* Header */}
+                    <header className="bg-white sticky top-0 z-50 px-5 py-4 shadow-sm border-b border-emerald-50">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h1 className="text-xl font-bold text-emerald-900 tracking-tight flex items-center gap-2">
+                                    <Icon name="scan-line" className="w-6 h-6 text-emerald-600" />
+                                    远程缴费协作攻略
+                                </h1>
+                                <p className="text-xs text-stone-400 mt-1 pl-8">上海陪诊小河 • 实用指南</p>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="p-4">
+                        {/* 紧凑型警示卡片 (无箭头版) */}
+                        <GoldenRuleSection />
+
+                        <div className="flex items-center gap-2 mb-3 text-xs text-stone-500 px-1">
+                            <Icon name="mouse-pointer-click" className="w-3 h-3" />
+                            <span>点击下方步骤卡片可标记/高亮</span>
+                        </div>
+
+                        {/* OS 切换 Tab */}
+                        <div className="bg-white p-1.5 rounded-xl shadow-sm border border-stone-100 flex mb-6">
+                            <button 
+                                onClick={() => handleOsChange('iphone')}
+                                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                                    os === 'iphone' 
+                                    ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200' 
+                                    : 'text-stone-400 hover:bg-stone-50'
+                                }`}
+                            >
+                                <Icon name="smartphone" className="w-4 h-4" />
+                                iPhone (可截屏)
+                            </button>
+                            <button 
+                                onClick={() => handleOsChange('android')}
+                                className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
+                                    os === 'android' 
+                                    ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200' 
+                                    : 'text-stone-400 hover:bg-stone-50'
+                                }`}
+                            >
+                                <Icon name="monitor-smartphone" className="w-4 h-4" />
+                                安卓 (防截屏)
+                            </button>
+                        </div>
+
+                        {/* 内容区域 */}
+                        <div className="space-y-2 pb-6">
+                            {/* --- iPhone 内容 --- */}
+                            {os === 'iphone' && (
+                                <>
+                                    <MethodCard 
+                                        id="ip1"
+                                        number="1"
+                                        title="腾讯会议共享屏幕"
+                                        badge="推荐"
+                                        isActive={activeStepId === 'ip1'}
+                                        onToggle={handleStepToggle}
+                                        content="双方进入腾讯会议，点击屏幕下面的“共享屏幕”。切换到支付宝，直接展示二维码即可"
+                                    />
+
+                                    <MethodCard 
+                                        id="ip2"
+                                        number="2"
+                                        title="本机截图"
+                                        isActive={activeStepId === 'ip2'}
+                                        onToggle={handleStepToggle}
+                                        warning={
+                                            <ul className="list-disc pl-3 space-y-1 mt-1">
+                                                <li>发送之后<strong>千万不要立即点刷新</strong>，刷新即失效！</li>
+                                                <li>检查每次发送的是最新的截图。</li>
+                                            </ul>
+                                        }
+                                        content={
+                                            <div>
+                                                每次流程：<br/>
+                                                发之前先点<strong>刷新</strong>医保码 → 然后截图 → 发送。
+                                            </div>
+                                        }
+                                    />
+
+                                    <MethodCard 
+                                        id="ip3"
+                                        number="3"
+                                        title="双手机视频通话"
+                                        isActive={activeStepId === 'ip3'}
+                                        onToggle={handleStepToggle}
+                                        content="准备两个手机 (Pad也行)。一个手机开视频通话，直接拍摄另一个手机上的医保码。"
+                                    />
+
+                                    <MethodCard 
+                                        id="ip4"
+                                        number="4"
+                                        title="微信群拍照"
+                                        isActive={activeStepId === 'ip4'}
+                                        onToggle={handleStepToggle}
+                                        content={
+                                            <div>
+                                                准备两个手机 (Pad也行)，三个人拉一个微信群。一个手机拍另一个手机医保码，发到群里。
+                                                <div className="mt-2">
+                                                    每次流程：<br/>
+                                                    发之前先点<strong>刷新</strong>医保码 → 然后拍照 → 发送。
+                                                </div>
+                                            </div>
+                                        }
+                                        warning={
+                                            <ul className="list-disc pl-3 space-y-1 mt-1">
+                                                <li>发送之后<strong>千万不要立即点刷新</strong>，刷新即失效！</li>
+                                                <li>检查每次发送的是最新的照片。</li>
+                                            </ul>
+                                        }
+                                    />
+
+                                    <MethodCard 
+                                        id="ip5"
+                                        number="5"
+                                        title="电脑微信辅助"
+                                        isActive={activeStepId === 'ip5'}
+                                        onToggle={handleStepToggle}
+                                        content={
+                                            <div>
+                                                登录电脑版微信，在电脑上打开医保码小程序，用手机对着电脑屏幕拍照或开视频。
+                                                <div className="mt-2">
+                                                    每次流程：<br/>
+                                                    发之前先点<strong>刷新</strong>医保码 → 然后拍照 → 发送。
+                                                </div>
+                                            </div>
+                                        }
+                                        warning={
+                                            <ul className="list-disc pl-3 space-y-1 mt-1">
+                                                <li>发送之后<strong>千万不要立即点刷新</strong>，刷新即失效！</li>
+                                                <li>检查每次发送的是最新的照片。</li>
+                                            </ul>
+                                        }
+                                    />
+                                </>
+                            )}
+
+                            {/* --- Android 内容 --- */}
+                            {os === 'android' && (
+                                <>
+                                    <MethodCard 
+                                        id="ad1"
+                                        number="1"
+                                        title="微信群"
+                                        isActive={activeStepId === 'ad1'}
+                                        onToggle={handleStepToggle}
+                                        content={
+                                            <div>
+                                                准备两个手机 (Pad也行)，三个人拉一个微信群。一个手机拍另一个手机医保码，发到群里。
+                                                <div className="mt-2">
+                                                    每次流程：<br/>
+                                                    发之前先点<strong>刷新</strong>医保码 → 然后拍照 → 发送。
+                                                </div>
+                                            </div>
+                                        }
+                                        warning={
+                                            <ul className="list-disc pl-3 space-y-1 mt-1">
+                                                <li>发送之后<strong>千万不要立即点刷新</strong>，刷新即失效！</li>
+                                                <li>检查每次发送的是最新的照片。</li>
+                                            </ul>
+                                        }
+                                    />
+
+                                    <MethodCard 
+                                        id="ad2"
+                                        number="2"
+                                        title="双手机视频通话"
+                                        badge="推荐"
+                                        isActive={activeStepId === 'ad2'}
+                                        onToggle={handleStepToggle}
+                                        content="准备两个手机 (Pad也行)。一个手机开视频通话，直接拍摄另一个手机上的医保码。"
+                                    />
+
+                                    <MethodCard 
+                                        id="ad3"
+                                        number="3"
+                                        title="电脑微信辅助"
+                                        isActive={activeStepId === 'ad3'}
+                                        onToggle={handleStepToggle}
+                                        content={
+                                            <div>
+                                                登录电脑版微信，在电脑上打开医保码小程序，用手机对着电脑屏幕拍照或开视频。
+                                                <div className="mt-2">
+                                                    每次流程：<br/>
+                                                    发之前先点<strong>刷新</strong>医保码 → 然后拍照 → 发送。
+                                                </div>
+                                            </div>
+                                        }
+                                        warning={
+                                            <ul className="list-disc pl-3 space-y-1 mt-1">
+                                                <li>发送之后<strong>千万不要立即点刷新</strong>，刷新即失效！</li>
+                                                <li>检查每次发送的是最新的照片。</li>
+                                            </ul>
+                                        }
+                                    />
+                                </>
+                            )}
+                        </div>
+
+                        {/* 进阶功能 */}
+                        <div className="mt-8 border-t border-stone-200 pt-6">
+                            <h3 className="font-bold text-stone-700 text-lg mb-4 flex items-center gap-2">
+                                <Icon name="layers" className="w-5 h-5 text-emerald-600" />
+                                支付宝进阶技巧
+                            </h3>
+                            
+                            <div className="grid gap-4">
+                                {/* 一码付 */}
+                                <div className="bg-gradient-to-br from-blue-50 to-white p-4 rounded-xl border border-blue-100 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-2 text-blue-800">
+                                        <Icon name="credit-card" className="w-4 h-4" />
+                                        <h4 className="font-bold">支付宝一码付</h4>
+                                    </div>
+                                    <p className="text-sm text-stone-600 mb-3 leading-relaxed">
+                                        缴费时出示医保码，自费部分直接支付宝扣除，<strong>无需再切换付款码</strong>。
+                                    </p>
+                                    <div className="bg-white/60 p-2 rounded text-xs text-stone-500 border border-blue-50">
+                                        <strong>设置路径：</strong><br/>
+                                        支付宝搜索“电子医保” → 医保二维码下方点击“升级为医保自费一次付” → 点击去开通。<br/>
+                                        (或直接搜索“医保一码付”)
+                                    </div>
+                                </div>
+
+                                {/* 亲情账户 */}
+                                <div className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                                    <div className="flex items-center gap-2 mb-2 text-indigo-800">
+                                        <Icon name="users" className="w-4 h-4" />
+                                        <h4 className="font-bold">医保亲情账户</h4>
+                                    </div>
+                                    <p className="text-sm text-stone-600 mb-3 leading-relaxed">
+                                        可在自己手机上直接管理家人医保码。
+                                    </p>
+                                    <div className="bg-white/60 p-2 rounded text-xs text-stone-500 border border-indigo-50">
+                                        <strong>设置路径：</strong><br/>
+                                        支付宝搜“电子医保” → 进入页面后 → 点击页面上方名字右边“+绑定家人” → 输入家人信息按提示操作。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </main>
+
+                    <footer className="text-center mt-8 text-stone-300 text-xs pb-4">
+                        <p> 本页面内容仅为信息整理与经验分享，不构成任何操作指引<br/>或责任承担，医保码使用请以医院及相关部门规定为准。 </p>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
